@@ -196,6 +196,8 @@ void Interface::process() {
 	}
 }
 
+float Interface::get_time() { return (float)(millis() - this->restart_time) / 1000.0; }
+
 Status::Status() {
 	this->_controllerOn = true;
 	this->_logOn = false;

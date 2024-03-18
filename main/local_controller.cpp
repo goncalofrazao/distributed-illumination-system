@@ -65,13 +65,31 @@ void LocalController::control(float y) {
 }
 
 void LocalController::log() {
-	Serial.print(0);
+	Serial.print(G);  // Actuator gain
 	Serial.print(" ");
-	Serial.print(ref);
+	Serial.print(ref);	// reference luminance
 	Serial.print(" ");
-	Serial.print(y_old);
+	Serial.print(y_old);  // read luminance
 	Serial.print(" ");
-	Serial.println(G);
+	Serial.print(u / 4095.0);  // actuation (in duty cycle)
+	Serial.print(" ");
+	Serial.print(v / 4095.0);  // PID output (in duty cycle)
+	Serial.print(" ");
+	Serial.print(I);  // integral term of the controller
+	Serial.print(" ");
+	Serial.print(P);  // proportional term of the controller
+	Serial.print(" ");
+	Serial.print(this->metrics->get_energy());	// cumulative energy
+	Serial.print(" ");
+	Serial.print(this->metrics->get_visibility_error());  // cumulative visibility error
+	Serial.print(" ");
+	Serial.print(this->metrics->get_flicker());	 // cumulative flicker
+	Serial.print(" ");
+	Serial.print(this->metrics->get_instantaneous_power());	 // instantaneous power
+	Serial.print(" ");
+	Serial.print(this->luxmeter->read() -
+				 G * this->driver->get_duty_cycle());  // external luminance
+	Serial.print(" ");
 }
 
 void LocalController::set_ideal_gains(float x) {

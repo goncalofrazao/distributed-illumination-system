@@ -45,6 +45,7 @@ class Interface {
 			  Metrics *metrics, Status *status);
 	bool available();
 	void process();
+	float get_time();
 };
 
 #endif
