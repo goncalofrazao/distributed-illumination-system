@@ -101,13 +101,13 @@ void loop() {
 
 	// timer = millis();
 
-	// if (status.luxmeterLogOn()) {
-	// 	luxmeter.log(ID);
-	// }
+	if (status.luxmeterLogOn()) {
+		luxmeter.log(ID);
+	}
 
-	// if (status.dutycycleLogOn()) {
-	// 	driver.log(ID);
-	// }
+	if (status.dutycycleLogOn()) {
+		driver.log(ID);
+	}
 
 	// Serial.print(millis() - timer);
 	// Serial.print(" ");
