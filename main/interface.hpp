@@ -41,10 +41,10 @@ class Interface {
 	int restart_time;
 
    public:
-	Interface(int id, LocalController *local_controller, Driver *driver, Luxmeter *Luxmeter,
-			  Metrics *metrics, Status *status);
+	Interface(LocalController *local_controller, Driver *driver, Luxmeter *Luxmeter, Metrics *metrics, Status *status);
+	void set_id(int _id);
 	bool available();
-	void process();
+	void process(String command);
 	float get_time();
 };
 

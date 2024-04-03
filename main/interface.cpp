@@ -1,8 +1,6 @@
 #include "interface.hpp"
 
-Interface::Interface(int id, LocalController *local_controller, Driver *driver, Luxmeter *luxmeter,
-					 Metrics *metrics, Status *status) {
-	this->id = id;
+Interface::Interface(LocalController *local_controller, Driver *driver, Luxmeter *luxmeter, Metrics *metrics, Status *status) {
 	this->local_controller = local_controller;
 	this->driver = driver;
 	this->luxmeter = luxmeter;
@@ -10,6 +8,8 @@ Interface::Interface(int id, LocalController *local_controller, Driver *driver, 
 	this->status = status;
 	this->restart_time = millis();
 }
+
+void Interface::set_id(int _id) { id = _id; }
 
 bool Interface::available() {
 	if (Serial.available()) {
@@ -19,10 +19,9 @@ bool Interface::available() {
 	}
 }
 
-void Interface::process() {
+void Interface::process(String command) {
 	int i, occupancy, anti_windup, feedback;
 	float duty_cycle, lux;
-	String command = Serial.readStringUntil('\n');
 
 	if (command.startsWith("d")) {
 		sscanf(command.c_str(), "d %d %f", &i, &duty_cycle);
@@ -110,8 +109,7 @@ void Interface::process() {
 			Serial.print("x ");
 			Serial.print(i);
 			Serial.print(" ");
-			Serial.println(this->luxmeter->read() -
-						   this->driver->get_duty_cycle() * this->local_controller->get_G());
+			Serial.println(this->luxmeter->read() - this->driver->get_duty_cycle() * this->local_controller->get_G());
 		}
 	} else if (command.startsWith("g p")) {
 		sscanf(command.c_str(), "g p %d", &i);
@@ -187,12 +185,15 @@ void Interface::process() {
 			Serial.print(" ");
 			Serial.println(this->metrics->get_flicker());
 		}
-	}
-
-	if (command.startsWith("log off")) {
+	} else if (command.startsWith("get id")) {
+		Serial.println("id: ");
+		Serial.println(this->id);
+	} else if (command.startsWith("log off")) {
 		this->status->setLogOff();
 	} else if (command.startsWith("log on")) {
 		this->status->setLogOn();
+	} else {
+		Serial.println("err");
 	}
 }
 
