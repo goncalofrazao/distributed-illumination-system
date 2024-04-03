@@ -19,7 +19,7 @@ LocalController local_controller(1, 1, 1, 1, 0, 1, 10);
 Driver driver(LED_PIN, FREQUENCY, RANGE);
 Metrics metrics;
 Status status;
-Interface interface(ID, &local_controller, &driver, &luxmeter, &metrics, &status);
+Interface interface(&local_controller, &driver, &luxmeter, &metrics, &status);
 Communicator communicator;
 
 MCP2515 can0{spi0, 17, 19, 16, 18, 10000000};

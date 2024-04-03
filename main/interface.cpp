@@ -186,7 +186,7 @@ void Interface::process(String command) {
 			Serial.println(this->metrics->get_flicker());
 		}
 	} else if (command.startsWith("get id")) {
-		Serial.println("id: ");
+		Serial.print("id: ");
 		Serial.println(this->id);
 	} else if (command.startsWith("log off")) {
 		this->status->setLogOff();
