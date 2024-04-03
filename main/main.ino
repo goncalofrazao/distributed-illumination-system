@@ -30,9 +30,6 @@ unsigned long sample_time = 10000;
 unsigned long time_to_write;
 unsigned long write_delay = 1000;
 
-uint8_t this_pico_flash_id[8];
-const byte interruptPin{20};
-
 unsigned long timer;
 unsigned long jitter;
 unsigned long control_time;
@@ -52,9 +49,8 @@ void setup() {
 
 	communicator.set_can0(&can0);
 
-	flash_get_unique_id(this_pico_flash_id);
-	communicator.set_id(this_pico_flash_id[6]);
-	interface.set_id(this_pico_flash_id[6]);
+	communicator.set_id();
+	interface.set_id(communicator.get_id());
 }
 
 void setup1() {}

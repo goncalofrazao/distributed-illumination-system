@@ -2,7 +2,11 @@
 
 Communicator::Communicator() {}
 
-void Communicator::set_id(uint8_t _id) { id = _id; }
+void Communicator::set_id() {
+	uint8_t pico_flash_id[8];
+	flash_get_unique_id(pico_flash_id);
+	id = pico_flash_id[6];
+}
 
 uint8_t Communicator::get_id() { return id; }
 
