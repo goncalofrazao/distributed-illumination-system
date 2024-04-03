@@ -1,3 +1,4 @@
+#include "communicator.hpp"
 #include "driver.hpp"
 #include "hardware/flash.h"
 #include "interface.hpp"
@@ -19,23 +20,22 @@ Driver driver(LED_PIN, FREQUENCY, RANGE);
 Metrics metrics;
 Status status;
 Interface interface(ID, &local_controller, &driver, &luxmeter, &metrics, &status);
+Communicator communicator;
 
-// can
-// uint8_t this_pico_flash_id[8], node_address;
-// struct can_frame can_msg_rx, can_msg_tx;
-// unsigned long counter_tx = 0, counter_rx = 0;
-// MCP2515::ERROR err;
-// unsigned long time_to_write;
-// unsigned long write_delay = 1000;
-// const byte interruptPin = 20;
-// volatile byte data_available = false;
-
-// MCP2515 can0{spi0, 17, 19, 16, 18, 10000000};
-
-// void read_interrupt(uint gpio, uint32_t events) { data_available = true; }
+MCP2515 can0{spi0, 17, 19, 16, 18, 10000000};
 
 unsigned long last_time = micros();
 unsigned long sample_time = 10000;
+
+unsigned long time_to_write;
+unsigned long write_delay = 1000;
+
+uint8_t this_pico_flash_id[8];
+const byte interruptPin{20};
+
+unsigned long timer;
+unsigned long jitter;
+unsigned long control_time;
 
 void setup() {
 	Serial.begin(115200);
@@ -48,30 +48,18 @@ void setup() {
 	local_controller.set_metrics(&metrics);
 	local_controller.calibrate();
 
-	// setup can
-	// flash_get_unique_id(this_pico_flash_id);
-	// node_address = this_pico_flash_id[7];
-	// can0.reset();
-	// can0.setBitrate(CAN_1000KBPS);
-	// can0.setNormalMode();
-	// gpio_set_irq_enabled_with_callback(interruptPin, GPIO_IRQ_EDGE_FALL, true, &read_interrupt);
-	// time_to_write = millis() + write_delay;
+	time_to_write = millis() + write_delay;
+
+	communicator.set_can0(&can0);
+
+	flash_get_unique_id(this_pico_flash_id);
+	communicator.set_id(this_pico_flash_id[6]);
+	interface.set_id(this_pico_flash_id[6]);
 }
 
-unsigned long timer;
-unsigned long jitter;
-unsigned long control_time;
+void setup1() {}
 
 void loop() {
-	if (interface.available()) {
-		timer = micros();
-
-		interface.process();
-
-		// Serial.print(millis() - timer);
-		// Serial.print(" ");
-	}
-
 	unsigned long current_time = micros() - last_time;
 	if (current_time > sample_time && status.controllerOn()) {
 		jitter = current_time - sample_time;
@@ -99,8 +87,6 @@ void loop() {
 		last_time = micros();
 	}
 
-	// timer = millis();
-
 	if (status.luxmeterLogOn()) {
 		luxmeter.log(ID);
 	}
@@ -109,41 +95,24 @@ void loop() {
 		driver.log(ID);
 	}
 
-	// Serial.print(millis() - timer);
-	// Serial.print(" ");
+	if (millis() >= time_to_write) {
+		communicator.send_id();
+		time_to_write = millis() + write_delay;
+	}
 
-	// timer = millis();
+	if (communicator.recv()) {
+		uint8_t id = communicator.get_recv_id();
+		Serial.print("RX ");
+		Serial.println(id);
+	}
+}
 
-	// if (millis() >= time_to_write) {
-	// 	can_msg_tx.can_id = node_address;
-	// 	can_msg_tx.can_dlc = 8;
-	// 	unsigned long div = counter_tx * 10;
-	// 	for (int i = 0; i < 8; i++) {
-	// 		can_msg_tx.data[7 - i] = '0' + ((div /= 10) % 10);
-	// 	}
-	// 	err = can0.sendMessage(&can_msg_tx);
-	// 	Serial.print("TX ");
-	// 	Serial.print(counter_tx);
-	// 	Serial.print(" from node ");
-	// 	Serial.println(node_address, HEX);
-	// 	counter_tx++;
-	// 	time_to_write = millis() + write_delay;
-	// }
-
-	// if (data_available) {
-	// 	can0.readMessage(&can_msg_rx);
-	// 	Serial.print("RX ");
-	// 	Serial.print(counter_rx++);
-	// 	Serial.print(" from node ");
-	// 	Serial.print(can_msg_rx.can_id, HEX);
-	// 	Serial.print(" : ");
-	// 	for (int i = 0; i < can_msg_rx.can_dlc; i++) {
-	// 		Serial.print((char)can_msg_rx.data[i]);
-	// 	}
-	// 	Serial.println();
-	// 	data_available = false;
-	// }
-
-	// Serial.print(millis() - timer);
-	// Serial.println();
+void loop1() {
+	if (interface.available()) {
+		rp2040.idleOtherCore();
+		String command = Serial.readStringUntil('\n');
+		interface.process(command);
+		rp2040.resumeOtherCore();
+	}
+	delay(1000);
 }
