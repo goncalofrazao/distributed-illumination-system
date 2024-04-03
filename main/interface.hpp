@@ -38,14 +38,22 @@ class Interface {
 	Luxmeter *luxmeter;
 	Metrics *metrics;
 	Status *status;
+	void *communicator;
 	int restart_time;
 
+	int neighbours[2];
+	int neighbour_count;
+
    public:
-	Interface(LocalController *local_controller, Driver *driver, Luxmeter *Luxmeter, Metrics *metrics, Status *status);
+	Interface(LocalController *local_controller, Driver *driver, Luxmeter *Luxmeter, Metrics *metrics, Status *status, void *communicator);
 	void set_id(int _id);
 	bool available();
 	void process(String command);
 	float get_time();
+
+	int *get_neighbours(int *n);
+	void push_neighbour(int id);
+	void print_neighbours();
 };
 
 #endif

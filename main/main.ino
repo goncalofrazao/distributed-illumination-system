@@ -19,8 +19,8 @@ LocalController local_controller(1, 1, 1, 1, 0, 1, 10);
 Driver driver(LED_PIN, FREQUENCY, RANGE);
 Metrics metrics;
 Status status;
-Interface interface(&local_controller, &driver, &luxmeter, &metrics, &status);
 Communicator communicator;
+Interface interface(&local_controller, &driver, &luxmeter, &metrics, &status, (void*)&communicator);
 
 MCP2515 can0{spi0, 17, 19, 16, 18, 10000000};
 
@@ -48,9 +48,10 @@ void setup() {
 	time_to_write = millis() + write_delay;
 
 	communicator.set_can0(&can0);
-
+	communicator.set_interface(&interface);
 	communicator.set_id();
-	interface.set_id(communicator.get_id());
+
+	communicator.send_syn();
 }
 
 void setup1() {}
@@ -91,15 +92,16 @@ void loop() {
 		driver.log(ID);
 	}
 
-	if (millis() >= time_to_write) {
-		communicator.send_id();
-		time_to_write = millis() + write_delay;
-	}
+	// if (millis() >= time_to_write) {
+	// 	communicator.send_id();
+	// 	time_to_write = millis() + write_delay;
+	// }
 
 	if (communicator.recv()) {
-		uint8_t id = communicator.get_recv_id();
-		Serial.print("RX ");
-		Serial.println(id);
+		// uint8_t id = communicator.get_recv_id();
+		// Serial.print("RX ");
+		// Serial.println(id);
+		communicator.process();
 	}
 }
 

@@ -1,12 +1,20 @@
 #include "interface.hpp"
 
-Interface::Interface(LocalController *local_controller, Driver *driver, Luxmeter *luxmeter, Metrics *metrics, Status *status) {
+#include "communicator.hpp"
+
+Interface::Interface(LocalController *local_controller, Driver *driver, Luxmeter *luxmeter, Metrics *metrics, Status *status, void *communicator) {
 	this->local_controller = local_controller;
 	this->driver = driver;
 	this->luxmeter = luxmeter;
 	this->metrics = metrics;
 	this->status = status;
+	this->communicator = communicator;
 	this->restart_time = millis();
+
+	this->neighbour_count = 0;
+	for (int i = 0; i < 2; i++) {
+		this->neighbours[i] = 0;
+	}
 }
 
 void Interface::set_id(int _id) { id = _id; }
@@ -22,6 +30,7 @@ bool Interface::available() {
 void Interface::process(String command) {
 	int i, occupancy, anti_windup, feedback;
 	float duty_cycle, lux;
+	Communicator *comm = (Communicator *)communicator;
 
 	if (command.startsWith("d")) {
 		sscanf(command.c_str(), "d %d %f", &i, &duty_cycle);
@@ -192,12 +201,43 @@ void Interface::process(String command) {
 		this->status->setLogOff();
 	} else if (command.startsWith("log on")) {
 		this->status->setLogOn();
+	} else if (command.startsWith("get neighbours")) {
+		this->print_neighbours();
 	} else {
 		Serial.println("err");
 	}
 }
 
 float Interface::get_time() { return (float)(millis() - this->restart_time) / 1000.0; }
+
+bool exists(int *arr, int size, int val) {
+	for (int i = 0; i < size; i++) {
+		if (arr[i] == val) {
+			return true;
+		}
+	}
+	return false;
+}
+
+int *Interface::get_neighbours(int *n) {
+	*n = neighbour_count;
+	return neighbours;
+}
+
+void Interface::push_neighbour(int id) {
+	if (!exists(neighbours, neighbour_count, id)) {
+		neighbours[neighbour_count] = id;
+		neighbour_count++;
+	}
+}
+
+void Interface::print_neighbours() {
+	for (int i = 0; i < neighbour_count; i++) {
+		Serial.print(neighbours[i]);
+		Serial.print(" ");
+	}
+	Serial.println();
+}
 
 Status::Status() {
 	this->_controllerOn = true;
