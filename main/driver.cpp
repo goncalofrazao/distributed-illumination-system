@@ -26,6 +26,7 @@ float Driver::get_duty_cycle() { return this->duty_cycle; }
 void Driver::log(void *communicator) {
 	Communicator *comm = (Communicator *)communicator;
 	comm->stream_duty(this->duty_cycle);
+	comm->send(NULL);
 }
 
 void Driver::set_time(int time) { this->time = time; }

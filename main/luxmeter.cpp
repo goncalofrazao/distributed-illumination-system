@@ -66,6 +66,7 @@ float Luxmeter::lux2resistance(float lux) { return (std::pow(10, (std::log10(lux
 void Luxmeter::log(void *communicator) {
 	Communicator *comm = (Communicator *)communicator;
 	comm->stream_lux(this->read());
+	comm->send(NULL);
 }
 
 void Luxmeter::set_time(int time) { this->time = time; }

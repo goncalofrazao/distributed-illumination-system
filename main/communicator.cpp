@@ -164,9 +164,11 @@ void Communicator::process() {
 			break;
 		case 18:
 			interface->status->setDutycycleLogOff();
+			ack();
 			break;
 		case 19:
 			interface->status->setLuxmeterLogOff();
+			ack();
 			break;
 		case 20:
 			break;
