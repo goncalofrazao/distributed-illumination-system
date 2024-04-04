@@ -281,25 +281,14 @@ Status::Status() {
 }
 
 bool Status::controllerOn() { return this->_controllerOn; }
-
 bool Status::logOn() { return this->_logOn; }
-
 bool Status::luxmeterLogOn() { return this->_luxmeterLogOn; }
-
 bool Status::dutycycleLogOn() { return this->_dutycycleLogOn; }
-
 void Status::setControllerOn() { this->_controllerOn = true; }
-
 void Status::setControllerOff() { this->_controllerOn = false; }
-
 void Status::setLogOn() { this->_logOn = true; }
-
 void Status::setLogOff() { this->_logOn = false; }
-
 void Status::setLuxmeterLogOn() { this->_luxmeterLogOn = true; }
-
 void Status::setLuxmeterLogOff() { this->_luxmeterLogOn = false; }
-
 void Status::setDutycycleLogOn() { this->_dutycycleLogOn = true; }
-
 void Status::setDutycycleLogOff() { this->_dutycycleLogOn = false; }

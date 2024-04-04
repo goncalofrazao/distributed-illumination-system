@@ -84,6 +84,17 @@ void stream_float(char c, int id, float val, float time) {
 	Serial.println(time);
 }
 
+void fullfill_msg(struct can_frame* msg, int id, int code, void* data) {
+	msg->can_id = id;
+	msg->data[0] = code;
+	if (data) {
+		msg->can_dlc = 5;
+		memcpy(&msg->data[1], data, 4);
+	} else {
+		msg->can_dlc = 1;
+	}
+}
+
 void Communicator::process() {
 	int aux_int;
 	float aux_float;
@@ -285,17 +296,6 @@ void Communicator::process() {
 			return;
 	}
 	can0->sendMessage(&can_msg_tx);
-}
-
-void fullfill_msg(struct can_frame* msg, int id, int code, void* data) {
-	msg->can_id = id;
-	msg->data[0] = code;
-	if (data) {
-		msg->can_dlc = 5;
-		memcpy(&msg->data[1], data, 4);
-	} else {
-		msg->can_dlc = 1;
-	}
 }
 
 void Communicator::set_duty(int i, float data) { fullfill_msg(&can_msg_tx, i, 2, &data); }		// 2

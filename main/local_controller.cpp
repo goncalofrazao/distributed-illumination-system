@@ -25,29 +25,17 @@ LocalController::LocalController(float _h, float _K, float b_, float _Ti, float 
 }
 
 float LocalController::get_G() { return this->G; }
-
 void LocalController::set_feedback(bool feedback) { this->feedback = feedback; }
-
 bool LocalController::get_feedback() { return this->feedback; }
-
 void LocalController::set_anti_windup(bool anti_windup) { this->anti_windup = anti_windup; }
-
 bool LocalController::get_anti_windup() { return this->anti_windup; }
-
 void LocalController::set_ref(float ref) { this->ref = ref; }
-
 void LocalController::set_occupancy(int occupancy) { this->set_ref(occupancy ? OCCUPIED : UNOCCUPIED); }
-
 int LocalController::get_occupancy() { return this->ref == OCCUPIED ? 1 : 0; }
-
 float LocalController::get_ref() { return this->ref; }
-
 void LocalController::set_driver(Driver *driver) { this->driver = driver; }
-
 void LocalController::set_luxmeter(Luxmeter *luxmeter) { this->luxmeter = luxmeter; }
-
 void LocalController::set_metrics(Metrics *metrics) { this->metrics = metrics; }
-
 void LocalController::set_communicator(void *communicator) { this->communicator = communicator; }
 
 void LocalController::control(float y) {
@@ -114,19 +102,6 @@ void LocalController::set_ideal_gains(float x) {
 	ad = Td / (Td + N * h);
 	bd = K * ad * N;
 	ao = h / Tt;
-
-	// Serial.print("G ");
-	// Serial.print(G);
-	// Serial.print(" H ");
-	// Serial.print(H);
-	// Serial.print(" tau ");
-	// Serial.print(tau);
-	// Serial.print(" K ");
-	// Serial.print(K);
-	// Serial.print(" b ");
-	// Serial.print(b);
-	// Serial.print(" Ti ");
-	// Serial.println(Ti);
 }
 
 void LocalController::calibrate() {
