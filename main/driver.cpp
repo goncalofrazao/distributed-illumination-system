@@ -1,5 +1,7 @@
 #include "driver.hpp"
 
+#include "communicator.hpp"
+
 Driver::Driver(pin_size_t pin, uint32_t frequency, uint32_t range) {
 	this->pin = pin;
 
@@ -21,13 +23,9 @@ void Driver::write_duty_cycle(float value) {
 
 float Driver::get_duty_cycle() { return this->duty_cycle; }
 
-void Driver::log(int id) {
-	Serial.print("s d ");
-	Serial.print(id);
-	Serial.print(" ");
-	Serial.print(this->duty_cycle);
-	Serial.print(" ");
-	Serial.println(millis() - this->time);
+void Driver::log(void *communicator) {
+	Communicator *comm = (Communicator *)communicator;
+	comm->stream_duty(this->duty_cycle);
 }
 
 void Driver::set_time(int time) { this->time = time; }

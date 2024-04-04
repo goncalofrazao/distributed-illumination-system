@@ -43,7 +43,8 @@ void setup() {
 	local_controller.set_driver(&driver);
 	local_controller.set_luxmeter(&luxmeter);
 	local_controller.set_metrics(&metrics);
-	local_controller.calibrate();
+	local_controller.set_communicator((void*)&communicator);
+	// local_controller.calibrate();
 
 	time_to_write = millis() + write_delay;
 
@@ -85,11 +86,11 @@ void loop() {
 	}
 
 	if (status.luxmeterLogOn()) {
-		luxmeter.log(ID);
+		luxmeter.log(&communicator);
 	}
 
 	if (status.dutycycleLogOn()) {
-		driver.log(ID);
+		driver.log(&communicator);
 	}
 
 	// if (millis() >= time_to_write) {

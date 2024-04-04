@@ -4,13 +4,17 @@
 
 #include <iostream>
 
+#include "communicator.hpp"
+
 #define sat(v, min, max) (v < min ? min : (v > max ? max : v))
 #define R1 10000.0
 #define Vcc 3.3
 #define C1 0.00001
 
-LocalController::LocalController(float _h, float _K, float b_, float _Ti, float _Td, float _Tt,
-								 float N_)
+#define OCCUPIED 100.0
+#define UNOCCUPIED 10.0
+
+LocalController::LocalController(float _h, float _K, float b_, float _Ti, float _Td, float _Tt, float N_)
 	: h(_h), K(_K), b(b_), Ti(_Ti), Td(_Td), Tt(_Tt), N(N_), I(0.0), D(0.0), y_old(0.0) {
 	bi = _K * _h / _Ti;
 	ad = _Td / (_Td + N_ * _h);
@@ -32,6 +36,10 @@ bool LocalController::get_anti_windup() { return this->anti_windup; }
 
 void LocalController::set_ref(float ref) { this->ref = ref; }
 
+void LocalController::set_occupancy(int occupancy) { this->set_ref(occupancy ? OCCUPIED : UNOCCUPIED); }
+
+int LocalController::get_occupancy() { return this->ref == OCCUPIED ? 1 : 0; }
+
 float LocalController::get_ref() { return this->ref; }
 
 void LocalController::set_driver(Driver *driver) { this->driver = driver; }
@@ -39,6 +47,8 @@ void LocalController::set_driver(Driver *driver) { this->driver = driver; }
 void LocalController::set_luxmeter(Luxmeter *luxmeter) { this->luxmeter = luxmeter; }
 
 void LocalController::set_metrics(Metrics *metrics) { this->metrics = metrics; }
+
+void LocalController::set_communicator(void *communicator) { this->communicator = communicator; }
 
 void LocalController::control(float y) {
 	P = K * b * ref;
@@ -87,8 +97,7 @@ void LocalController::log() {
 	Serial.print(" ");
 	Serial.print(this->metrics->get_instantaneous_power());	 // instantaneous power
 	Serial.print(" ");
-	Serial.print(this->luxmeter->read() -
-				 G * this->driver->get_duty_cycle());  // external luminance
+	Serial.print(this->luxmeter->read() - G * this->driver->get_duty_cycle());	// external luminance
 	Serial.print(" ");
 }
 

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "communicator.hpp"
 #include "driver.hpp"
 
 const float b = 6.065;	// rpi 2
@@ -14,9 +15,7 @@ Luxmeter::Luxmeter(pin_size_t pin, int bits) {
 	analogReadResolution(bits);
 }
 
-float Luxmeter::lux(int adc) {
-	return std::pow(10, (std::log10(33000 / (adc * 3.3 / DAC_RANGE) - 10000) - b) / m);
-}
+float Luxmeter::lux(int adc) { return std::pow(10, (std::log10(33000 / (adc * 3.3 / DAC_RANGE) - 10000) - b) / m); }
 
 float Luxmeter::read() {
 	// read 8 values and get the median
@@ -64,13 +63,9 @@ float Luxmeter::read_resistance() {
 
 float Luxmeter::lux2resistance(float lux) { return (std::pow(10, (std::log10(lux) * m + b))); }
 
-void Luxmeter::log(int id) {
-	Serial.print("s l ");
-	Serial.print(id);
-	Serial.print(" ");
-	Serial.print(this->read());
-	Serial.print(" ");
-	Serial.println(millis() - this->time);
+void Luxmeter::log(void *communicator) {
+	Communicator *comm = (Communicator *)communicator;
+	comm->stream_lux(this->read());
 }
 
 void Luxmeter::set_time(int time) { this->time = time; }

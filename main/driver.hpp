@@ -11,7 +11,7 @@ class Driver {
 	void write(int value);
 	void write_duty_cycle(float value);
 	float get_duty_cycle();
-	void log(int id);
+	void log(void *communicator);
 	void set_time(int time);
 
    private:

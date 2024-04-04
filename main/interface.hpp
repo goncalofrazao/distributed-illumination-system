@@ -33,11 +33,6 @@ class Status {
 
 class Interface {
 	int id;
-	LocalController *local_controller;
-	Driver *driver;
-	Luxmeter *luxmeter;
-	Metrics *metrics;
-	Status *status;
 	void *communicator;
 	int restart_time;
 
@@ -45,6 +40,12 @@ class Interface {
 	int neighbour_count;
 
    public:
+	LocalController *local_controller;
+	Driver *driver;
+	Luxmeter *luxmeter;
+	Metrics *metrics;
+	Status *status;
+
 	Interface(LocalController *local_controller, Driver *driver, Luxmeter *Luxmeter, Metrics *metrics, Status *status, void *communicator);
 	void set_id(int _id);
 	bool available();

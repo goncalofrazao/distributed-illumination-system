@@ -13,7 +13,7 @@ class Luxmeter {
 	void read_raw();
 	float read_resistance();
 	float lux2resistance(float lux);
-	void log(int id);
+	void log(void *communicator);
 	void set_time(int time);
 
    private:
