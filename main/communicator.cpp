@@ -30,11 +30,14 @@ void Communicator::send(struct can_frame* msg) {
 
 bool Communicator::recv() {
 	auto err = can0->readMessage(&can_msg_rx);
+	auto flags = can0->getErrorFlags();
 	if (err == MCP2515::ERROR_OK) {
 		return true;
-	} else {
-		return false;
+	} else if (flags & MCP2515::EFLG_RX0OVR) {
+		can0->clearRXnOVR();
+		Serial.println("RX0OVR");
 	}
+	return false;
 }
 
 void Communicator::send_syn() {

@@ -85,11 +85,11 @@ void loop() {
 		last_time = micros();
 	}
 
-	if (status.luxmeterLogOn()) {
+	if (status.luxmeterLogOn() && current_time > sample_time) {
 		luxmeter.log(&communicator);
 	}
 
-	if (status.dutycycleLogOn()) {
+	if (status.dutycycleLogOn() && current_time > sample_time) {
 		driver.log(&communicator);
 	}
 
