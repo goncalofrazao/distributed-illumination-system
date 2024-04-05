@@ -1,4 +1,5 @@
 #include "communicator.hpp"
+#include "controller.hpp"
 #include "driver.hpp"
 #include "hardware/flash.h"
 #include "interface.hpp"
@@ -15,12 +16,13 @@
 
 // control
 Luxmeter luxmeter(A0, 12);
-LocalController local_controller(1, 1, 1, 1, 0, 1, 10);
+LocalController local_controller(0.01, 1, 1, 1, 0, 1, 10);
 Driver driver(LED_PIN, FREQUENCY, RANGE);
 Metrics metrics;
 Status status;
 Communicator communicator;
-Interface interface(&local_controller, &driver, &luxmeter, &metrics, &status, (void*)&communicator);
+Controller controller;
+Interface interface(&local_controller, &driver, &luxmeter, &metrics, &status, (void*)&communicator, (void*)&controller);
 
 MCP2515 can0{spi0, 17, 19, 16, 18, 10000000};
 
@@ -44,18 +46,23 @@ void setup() {
 	local_controller.set_luxmeter(&luxmeter);
 	local_controller.set_metrics(&metrics);
 	local_controller.set_communicator((void*)&communicator);
-	// local_controller.calibrate();
 
 	time_to_write = millis() + write_delay;
 
 	communicator.set_can0(&can0);
 	communicator.set_interface(&interface);
+	communicator.set_controller((void*)&controller);
 	communicator.set_id();
 
 	communicator.send_syn();
+
+	controller.set_communicator(&communicator);
+	controller.set_interface(&interface);
 }
 
 void setup1() {}
+
+struct can_frame frame;
 
 void loop() {
 	unsigned long current_time = micros() - last_time;
@@ -93,25 +100,22 @@ void loop() {
 		driver.log(&communicator);
 	}
 
-	// if (millis() >= time_to_write) {
-	// 	communicator.send_id();
-	// 	time_to_write = millis() + write_delay;
-	// }
-
 	if (communicator.recv()) {
-		// uint8_t id = communicator.get_recv_id();
-		// Serial.print("RX ");
-		// Serial.println(id);
 		communicator.process();
 	}
-}
 
-void loop1() {
+	if (!communicator.can_queue.empty()) {
+		frame = communicator.can_queue.front();
+		communicator.can_queue.pop();
+		communicator.send(&frame);
+	}
+
 	if (interface.available()) {
-		rp2040.idleOtherCore();
+		// rp2040.idleOtherCore();
 		String command = Serial.readStringUntil('\n');
 		interface.process(command);
-		rp2040.resumeOtherCore();
+		// rp2040.resumeOtherCore();
 	}
-	delay(1000);
 }
+
+void loop1() { delay(1000); }

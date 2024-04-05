@@ -5,10 +5,12 @@
 #include "communicator.hpp"
 #include "driver.hpp"
 
-const float b = 6.065;	// rpi 2
-const float m = -0.9475;
-// const float b = 6.3551;	 // rpi 3
-// const float m = -0.582;
+// const float b = 6.3551;	 // rpi 1
+// const float m = -0.614;
+// const float b = 6.1319;	 // rpi 2
+// const float m = -0.2706;
+const float b = 5.7992;	 // rpi 3
+const float m = -0.8267;
 
 Luxmeter::Luxmeter(pin_size_t pin, int bits) {
 	this->pin = pin;

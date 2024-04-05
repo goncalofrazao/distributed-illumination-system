@@ -1,14 +1,17 @@
 #include "interface.hpp"
 
 #include "communicator.hpp"
+#include "controller.hpp"
 
-Interface::Interface(LocalController *local_controller, Driver *driver, Luxmeter *luxmeter, Metrics *metrics, Status *status, void *communicator) {
+Interface::Interface(LocalController *local_controller, Driver *driver, Luxmeter *luxmeter, Metrics *metrics, Status *status, void *communicator,
+					 void *controller) {
 	this->local_controller = local_controller;
 	this->driver = driver;
 	this->luxmeter = luxmeter;
 	this->metrics = metrics;
 	this->status = status;
 	this->communicator = communicator;
+	this->controller = controller;
 	this->restart_time = millis();
 
 	this->neighbour_count = 0;
@@ -31,6 +34,7 @@ void Interface::process(String command) {
 	int i, occupancy, anti_windup, feedback;
 	float duty_cycle, lux;
 	Communicator *comm = (Communicator *)communicator;
+	Controller *ctrl = (Controller *)controller;
 
 	if (command.startsWith("d")) {
 		sscanf(command.c_str(), "d %d %f", &i, &duty_cycle);
@@ -226,8 +230,14 @@ void Interface::process(String command) {
 			comm->get_flicker(i);
 			comm->send(NULL);
 		}
-	} else if (command.startsWith("r")) {
-		local_controller->calibrate();
+	} else if (command.startsWith("R")) {
+		this->restart_time = millis();
+		ctrl->calib();
+		comm->consensus();
+		comm->send(NULL);
+		ctrl->consensus_iterate();
+		Serial.println("ack");
+
 	} else if (command.startsWith("get id")) {
 		Serial.print("id: ");
 		Serial.println(this->id);
@@ -237,6 +247,8 @@ void Interface::process(String command) {
 		this->status->setLogOn();
 	} else if (command.startsWith("get neighbours")) {
 		this->print_neighbours();
+	} else if (command.startsWith("get ks")) {
+		ctrl->log();
 	} else {
 		Serial.println("err");
 	}
@@ -271,6 +283,15 @@ void Interface::print_neighbours() {
 		Serial.print(" ");
 	}
 	Serial.println();
+}
+
+int Interface::get_neighbour_index(int id) {
+	for (int i = 0; i < neighbour_count; i++) {
+		if (neighbours[i] == id) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 Status::Status() {

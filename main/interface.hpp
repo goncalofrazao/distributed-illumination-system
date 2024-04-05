@@ -33,20 +33,22 @@ class Status {
 
 class Interface {
 	int id;
-	void *communicator;
 	int restart_time;
 
+   public:
 	int neighbours[2];
 	int neighbour_count;
 
-   public:
 	LocalController *local_controller;
 	Driver *driver;
 	Luxmeter *luxmeter;
 	Metrics *metrics;
 	Status *status;
+	void *communicator;
+	void *controller;
 
-	Interface(LocalController *local_controller, Driver *driver, Luxmeter *Luxmeter, Metrics *metrics, Status *status, void *communicator);
+	Interface(LocalController *local_controller, Driver *driver, Luxmeter *Luxmeter, Metrics *metrics, Status *status, void *communicator,
+			  void *controller);
 	void set_id(int _id);
 	bool available();
 	void process(String command);
@@ -55,6 +57,7 @@ class Interface {
 	int *get_neighbours(int *n);
 	void push_neighbour(int id);
 	void print_neighbours();
+	int get_neighbour_index(int id);
 };
 
 #endif
