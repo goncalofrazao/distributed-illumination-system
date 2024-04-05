@@ -4,6 +4,8 @@
 
 Communicator::Communicator() {}
 
+void Communicator::default_push() { can_queue.push(can_msg_tx); }
+
 void Communicator::set_id() {
 	uint8_t pico_flash_id[8];
 	flash_get_unique_id(pico_flash_id);
@@ -99,7 +101,7 @@ void fullfill_msg(struct can_frame* msg, int id, int code, void* data) {
 }
 
 void Communicator::consensus_update() {
-	Controller* control = (Controller*)controller;
+	Controller* ctrl = (Controller*)controller;
 	float d;
 	can_msg_tx.can_id = id;
 	can_msg_tx.can_dlc = 6;
@@ -119,14 +121,14 @@ void Communicator::consensus_update() {
 void Communicator::process() {
 	int aux_int;
 	float aux_float;
-	Controller* control = (Controller*)controller;
+	Controller* ctrl = (Controller*)controller;
 	int i, j;
 
 	// Serial.print(can_msg_rx.can_id);
 	// Serial.print(" - ");
 	// Serial.println(can_msg_rx.data[0]);
 
-	if (can_msg_rx.data[0] > 1 && can_msg_rx.data[0] < 32 && can_msg_rx.can_id != id) {
+	if (can_msg_rx.data[0] > 1 && can_msg_rx.data[0] < 31 && can_msg_rx.can_id != id) {
 		return;
 	}
 
@@ -163,8 +165,12 @@ void Communicator::process() {
 		case 7:
 			interface->status->setControllerOn();
 			memcpy(&aux_int, &can_msg_rx.data[1], 4);
-			interface->local_controller->set_occupancy(aux_int);
-			ack();
+			if (aux_int)
+				ctrl->set_occupied();
+			else
+				ctrl->set_unoccupied();
+			consensus();
+			ctrl->consensus_iterate();
 			break;
 		case 8:
 			ack_occ(interface->local_controller->get_occupancy());
@@ -222,18 +228,33 @@ void Communicator::process() {
 			ack_flicker(interface->metrics->get_flicker());
 			break;
 		case 25:
+			ack_o_bound(ctrl->get_occupied());
 			break;
 		case 26:
+			memcpy(&aux_float, &can_msg_rx.data[1], 4);
+			ctrl->set_occupied_bound(aux_float);
+			consensus();
+			ctrl->consensus_iterate();
 			break;
 		case 27:
+			ack_u_bound(ctrl->get_unoccupied());
 			break;
 		case 28:
+			memcpy(&aux_float, &can_msg_rx.data[1], 4);
+			ctrl->set_unoccupied_bound(aux_float);
+			consensus();
+			ctrl->consensus_iterate();
 			break;
 		case 29:
+			ack_l_bound(ctrl->get_L());
 			break;
 		case 30:
+			ack_e_cost(ctrl->get_c(2));
 			break;
 		case 31:
+			memcpy(&aux_float, &can_msg_rx.data[1], 4);
+			aux_int = can_msg_rx.can_id == id ? 2 : interface->get_neighbour_index(can_msg_rx.can_id);
+			ctrl->set_c(aux_int, aux_float);
 			break;
 
 		case 254:
@@ -319,24 +340,24 @@ void Communicator::process() {
 			serial_convert_float('c', can_msg_rx.can_id, aux_float);
 			return;
 		case 61:
-			control->measure_o();
+			ctrl->measure_o();
 			return;
 		case 62:
 			memcpy(&aux_int, &can_msg_rx.data[1], 4);
 			i = aux_int == id ? 2 : interface->get_neighbour_index(aux_int);
-			control->measure_k(i);
+			ctrl->measure_k(i);
 			return;
 		case 63:
-			control->calculate();
+			ctrl->calculate();
 			return;
 		case 64:
-			control->consensus_iterate();
+			ctrl->consensus_iterate();
 			return;
 		case 100:
 			i = interface->get_neighbour_index(can_msg_rx.can_id);
 			j = can_msg_rx.data[1] == id ? 2 : interface->get_neighbour_index(can_msg_rx.data[1]);
 			memcpy(&aux_float, &can_msg_rx.data[2], 4);
-			control->update_d_recv(i, j, aux_float);
+			ctrl->update_d_recv(i, j, aux_float);
 			return;
 	}
 	can_queue.push(can_msg_tx);

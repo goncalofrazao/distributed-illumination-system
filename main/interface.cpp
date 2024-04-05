@@ -44,7 +44,7 @@ void Interface::process(String command) {
 			Serial.println("ack");
 		} else {
 			comm->set_duty(i, duty_cycle);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g d")) {
 		sscanf(command.c_str(), "g d %d", &i);
@@ -52,7 +52,7 @@ void Interface::process(String command) {
 			serial_convert_float('d', i, this->driver->get_duty_cycle());
 		} else {
 			comm->get_duty(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("r")) {
 		sscanf(command.c_str(), "r %d %f", &i, &lux);
@@ -62,7 +62,7 @@ void Interface::process(String command) {
 			Serial.println("ack");
 		} else {
 			comm->set_ref(i, lux);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g r")) {
 		sscanf(command.c_str(), "g r %d", &i);
@@ -70,7 +70,7 @@ void Interface::process(String command) {
 			serial_convert_float('r', i, this->local_controller->get_ref());
 		} else {
 			comm->get_ref(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g l")) {
 		sscanf(command.c_str(), "g l %d", &i);
@@ -78,17 +78,21 @@ void Interface::process(String command) {
 			serial_convert_float('l', i, this->luxmeter->read());
 		} else {
 			comm->get_lux(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("o")) {
 		sscanf(command.c_str(), "o %d %d", &i, &occupancy);
 		if (i == this->id) {
 			this->status->setControllerOn();
-			this->local_controller->set_occupancy(occupancy);
+			if (occupancy)
+				ctrl->set_occupied();
+			else
+				ctrl->set_unoccupied();
+			ctrl->consensus_iterate();
 			Serial.println("ack");
 		} else {
 			comm->set_occ(i, occupancy);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g o")) {
 		sscanf(command.c_str(), "g o %d", &i);
@@ -96,7 +100,7 @@ void Interface::process(String command) {
 			serial_convert_int('o', i, this->local_controller->get_occupancy());
 		} else {
 			comm->get_occ(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("a")) {
 		sscanf(command.c_str(), "a %d %d", &i, &anti_windup);
@@ -105,7 +109,7 @@ void Interface::process(String command) {
 			Serial.println("ack");
 		} else {
 			comm->set_anti(i, anti_windup);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g a")) {
 		sscanf(command.c_str(), "g a %d", &i);
@@ -113,7 +117,7 @@ void Interface::process(String command) {
 			serial_convert_int('a', i, this->local_controller->get_anti_windup());
 		} else {
 			comm->get_anti(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("k")) {
 		sscanf(command.c_str(), "k %d %d", &i, &feedback);
@@ -122,7 +126,7 @@ void Interface::process(String command) {
 			Serial.println("ack");
 		} else {
 			comm->set_fb(i, feedback);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g k")) {
 		sscanf(command.c_str(), "g k %d", &i);
@@ -130,7 +134,7 @@ void Interface::process(String command) {
 			serial_convert_int('k', i, this->local_controller->get_feedback());
 		} else {
 			comm->get_fb(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g x")) {
 		sscanf(command.c_str(), "g x %d", &i);
@@ -138,7 +142,7 @@ void Interface::process(String command) {
 			serial_convert_float('x', i, this->luxmeter->read() - this->driver->get_duty_cycle() * this->local_controller->get_G());
 		} else {
 			comm->get_ext_lux(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g p")) {
 		sscanf(command.c_str(), "g p %d", &i);
@@ -146,7 +150,7 @@ void Interface::process(String command) {
 			serial_convert_float('p', i, this->metrics->get_instantaneous_power());
 		} else {
 			comm->get_power(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g t")) {
 		sscanf(command.c_str(), "g t %d", &i);
@@ -154,7 +158,7 @@ void Interface::process(String command) {
 			serial_convert_float('t', i, this->get_time());
 		} else {
 			comm->get_time(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("s l")) {
 		sscanf(command.c_str(), "s l %d", &i);
@@ -162,7 +166,7 @@ void Interface::process(String command) {
 			this->status->setLuxmeterLogOn();
 		} else {
 			comm->start_lux_stream(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("s d")) {
 		sscanf(command.c_str(), "s d %d", &i);
@@ -170,7 +174,7 @@ void Interface::process(String command) {
 			this->status->setDutycycleLogOn();
 		} else {
 			comm->start_duty_stream(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("S l")) {
 		sscanf(command.c_str(), "S l %d", &i);
@@ -179,7 +183,7 @@ void Interface::process(String command) {
 			Serial.println("ack");
 		} else {
 			comm->stop_lux_stream(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("S d")) {
 		sscanf(command.c_str(), "S d %d", &i);
@@ -188,7 +192,7 @@ void Interface::process(String command) {
 			Serial.println("ack");
 		} else {
 			comm->stop_duty_stream(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g b l")) {
 		sscanf(command.c_str(), "g b l %d", &i);
@@ -196,7 +200,7 @@ void Interface::process(String command) {
 			this->metrics->log_luxmeter(i);
 		} else {
 			comm->get_last_min_lux(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g b d")) {
 		sscanf(command.c_str(), "g b d %d", &i);
@@ -204,7 +208,7 @@ void Interface::process(String command) {
 			this->metrics->log_dutycycle(i);
 		} else {
 			comm->get_last_min_duty(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g e")) {
 		sscanf(command.c_str(), "g e %d", &i);
@@ -212,7 +216,7 @@ void Interface::process(String command) {
 			serial_convert_float('e', i, this->metrics->get_energy());
 		} else {
 			comm->get_energy(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g v")) {
 		sscanf(command.c_str(), "g v %d", &i);
@@ -220,7 +224,7 @@ void Interface::process(String command) {
 			serial_convert_float('v', i, this->metrics->get_visibility_error());
 		} else {
 			comm->get_visibility(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
 	} else if (command.startsWith("g f")) {
 		sscanf(command.c_str(), "g f %d", &i);
@@ -228,16 +232,76 @@ void Interface::process(String command) {
 			serial_convert_float('f', i, this->metrics->get_flicker());
 		} else {
 			comm->get_flicker(i);
-			comm->send(NULL);
+			comm->default_push();
 		}
+	} else if (command.startsWith("g O")) {
+		sscanf(command.c_str(), "g O %d", &i);
+		if (i == this->id) {
+			serial_convert_float('O', i, ctrl->get_occupied());
+		} else {
+			comm->get_o_bound(i);
+			comm->default_push();
+		}
+	} else if (command.startsWith("O")) {
+		sscanf(command.c_str(), "O %d %f", &i, &lux);
+		if (i == this->id) {
+			ctrl->set_occupied_bound(lux);
+			comm->consensus();
+			comm->default_push();
+			ctrl->consensus_iterate();
+			Serial.println("ack");
+		} else {
+			comm->set_o_bound(i, lux);
+			comm->default_push();
+		}
+	} else if (command.startsWith("g U")) {
+		sscanf(command.c_str(), "g U %d", &i);
+		if (i == this->id) {
+			serial_convert_float('U', i, ctrl->get_unoccupied());
+		} else {
+			comm->get_u_bound(i);
+			comm->default_push();
+		}
+	} else if (command.startsWith("U")) {
+		sscanf(command.c_str(), "U %d %f", &i, &lux);
+		if (i == this->id) {
+			ctrl->set_unoccupied_bound(lux);
+			Serial.println("ack");
+			comm->consensus();
+			comm->default_push();
+			ctrl->consensus_iterate();
+		} else {
+			comm->set_u_bound(i, lux);
+			comm->default_push();
+		}
+	} else if (command.startsWith("g L")) {
+		sscanf(command.c_str(), "g L %d", &i);
+		if (i == this->id) {
+			serial_convert_float('L', i, ctrl->get_L());
+		} else {
+			comm->get_l_bound(i);
+			comm->default_push();
+		}
+	} else if (command.startsWith("g c")) {
+		sscanf(command.c_str(), "g c %d", &occupancy);
+		i = occupancy == id ? 2 : get_neighbour_index(occupancy);
+		serial_convert_float('c', occupancy, ctrl->get_c(i));
+	} else if (command.startsWith("c")) {
+		sscanf(command.c_str(), "c %d %f", &occupancy, &lux);
+		i = occupancy == id ? 2 : get_neighbour_index(occupancy);
+		ctrl->set_c(i, lux);
+		comm->set_e_cost(occupancy, lux);
+		comm->default_push();
+		comm->consensus();
+		comm->default_push();
+		ctrl->consensus_iterate();
 	} else if (command.startsWith("R")) {
 		this->restart_time = millis();
 		ctrl->calib();
 		comm->consensus();
-		comm->send(NULL);
+		comm->default_push();
 		ctrl->consensus_iterate();
 		Serial.println("ack");
-
 	} else if (command.startsWith("get id")) {
 		Serial.print("id: ");
 		Serial.println(this->id);

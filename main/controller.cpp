@@ -30,6 +30,9 @@ void Controller::set_c(int pos, float value) { c[pos] = value; }
 float Controller::get_c(int pos) { return c[pos]; }
 float Controller::get_d(int pos) { return d[2][pos]; }
 void Controller::set_L(float value) { L = value; }
+float Controller::get_L() { return L; }
+float Controller::get_occupied() { return occupied; }
+float Controller::get_unoccupied() { return unoccupied; }
 void Controller::set_rho(float value) { rho = value; }
 
 void Controller::set_occupied_bound(float value) { occupied = value; }
@@ -225,6 +228,14 @@ void Controller::consensus_iterate() {
 	_lambda(lambda, rho, d[2], d_av);
 
 	consensus();
+
+	Serial.print(iter);
+	Serial.print(" : d : ");
+	for (int i = 0; i < N; i++) {
+		Serial.print(d[2][i]);
+		Serial.print(" ");
+	}
+	Serial.println();
 
 	if (iter >= ITER) {
 		iter = 0;

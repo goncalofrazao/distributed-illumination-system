@@ -42,6 +42,9 @@ class Controller {
 	float get_c(int pos);
 	float get_d(int pos);
 	void set_L(float value);
+	float get_L();
+	float get_occupied();
+	float get_unoccupied();
 	void set_rho(float value);
 
 	void set_occupied_bound(float value);

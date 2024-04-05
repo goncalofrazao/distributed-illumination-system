@@ -21,6 +21,8 @@ class Communicator {
 
    public:
 	std::queue<struct can_frame> can_queue;
+	void default_push();
+
 	Communicator();
 
 	void set_id();
