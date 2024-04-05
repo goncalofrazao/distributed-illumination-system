@@ -17,9 +17,10 @@ Controller::Controller() {
 		d[2][i] = 0;
 		d_av[i] = 0;
 		lambda[i] = 0;
-		c[i] = MAX_POWER;
+		c[i] = 0;
 	}
-	rho = 0.05;
+	c[2] = MAX_POWER;
+	rho = 0.1;
 }
 
 void Controller::set_communicator(Communicator* communicator) { this->communicator = communicator; }
@@ -40,7 +41,7 @@ void Controller::set_unoccupied() { L = unoccupied; }
 void Controller::measure_o() { o = interface->luxmeter->read(); }
 void Controller::measure_k(int i) { k[i] = interface->luxmeter->read() - o; }
 void Controller::calculate_n() { n = dot_product(k, k); }
-void Controller::calculate_m() { m = n - k[2]; }
+void Controller::calculate_m() { m = n - k[2] * k[2]; }
 
 void Controller::calculate() {
 	calculate_n();
@@ -80,24 +81,24 @@ void unconstrained(float d_u[], float y[], float rho) {
 }
 
 void ILB(float d_bl[], float y[], float k[], float L, float rho, float o, float n) {
-	float a = dot_product(k, y);
-	for (int i = 0; i < N - 1; i++) {
-		d_bl[i] = y[i] / rho - k[i] / n * (o - L + a / rho);
+	float yk = dot_product(y, k);
+	for (int i = 0; i < N; i++) {
+		d_bl[i] = y[i] / rho - k[i] / n * (o - L + yk / rho);
 	}
 }
 
 void DLB(float d_b0[], float d_u[]) {
-	for (int i = 0; i < N - 1; i++) {
+	for (int i = 0; i < N; i++) {
 		d_b0[i] = d_u[i];
 	}
 	d_b0[2] = 0;
 }
 
 void DUB(float d_b1[], float d_u[]) {
-	for (int i = 0; i < N - 1; i++) {
+	for (int i = 0; i < N; i++) {
 		d_b1[i] = d_u[i];
 	}
-	d_b1[2] = 1;
+	d_b1[2] = 100;
 }
 
 void ILB_DLB(float d_l0[], float y[], float k[], float m, float o, float L, float rho) {
@@ -111,9 +112,9 @@ void ILB_DLB(float d_l0[], float y[], float k[], float m, float o, float L, floa
 void ILB_DUB(float d_l1[], float y[], float k[], float m, float o, float L, float rho) {
 	float yk = dot_product(y, k);
 	for (int i = 0; i < N; i++) {
-		d_l1[i] = y[i] / rho - k[i] / m * (o - L + k[2]) + k[i] / rho / m * (k[2] * y[2] - yk);
+		d_l1[i] = y[i] / rho - k[i] / m * (o - L + 100 * k[2]) + k[i] / rho / m * (k[2] * y[2] - yk);
 	}
-	d_l1[2] = 1;
+	d_l1[2] = 100;
 }
 
 void _y(float y[], float d_av[], float rho, float c[], float lambda[]) {
@@ -314,4 +315,7 @@ void Controller::log() {
 
 	Serial.print("o: ");
 	Serial.println(o);
+
+	Serial.print("L: ");
+	Serial.println(L);
 }

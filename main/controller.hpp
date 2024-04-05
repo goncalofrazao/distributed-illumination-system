@@ -8,7 +8,7 @@
 #include "interface.hpp"
 
 #define N 3
-#define ITER 60
+#define ITER 70
 
 class Controller {
 	float d[N][N];
