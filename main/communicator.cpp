@@ -128,7 +128,7 @@ void Communicator::process() {
 	// Serial.print(" - ");
 	// Serial.println(can_msg_rx.data[0]);
 
-	if (can_msg_rx.data[0] > 1 && can_msg_rx.data[0] < 31 && can_msg_rx.can_id != id) {
+	if (can_msg_rx.data[0] > 1 && can_msg_rx.data[0] < 32 && can_msg_rx.can_id != id) {
 		return;
 	}
 
@@ -173,7 +173,7 @@ void Communicator::process() {
 			ctrl->consensus_iterate();
 			break;
 		case 8:
-			ack_occ(interface->local_controller->get_occupancy());
+			ack_occ(ctrl->get_occupancy());
 			break;
 		case 9:
 			memcpy(&aux_int, &can_msg_rx.data[1], 4);
@@ -253,8 +253,8 @@ void Communicator::process() {
 			break;
 		case 31:
 			memcpy(&aux_float, &can_msg_rx.data[1], 4);
-			aux_int = can_msg_rx.can_id == id ? 2 : interface->get_neighbour_index(can_msg_rx.can_id);
-			ctrl->set_c(aux_int, aux_float);
+			ctrl->set_c(2, aux_float);
+			ack();
 			break;
 
 		case 254:

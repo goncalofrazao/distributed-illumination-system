@@ -16,7 +16,7 @@
 
 // control
 Luxmeter luxmeter(A0, 12);
-LocalController local_controller(0.01, 1, 1, 1, 0, 1, 10);
+LocalController local_controller(0.01, 100, 1, 0.5, 0, 0.1, 10);
 Driver driver(LED_PIN, FREQUENCY, RANGE);
 Metrics metrics;
 Status status;

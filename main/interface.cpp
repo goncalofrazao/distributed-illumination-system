@@ -88,6 +88,8 @@ void Interface::process(String command) {
 				ctrl->set_occupied();
 			else
 				ctrl->set_unoccupied();
+			comm->consensus();
+			comm->default_push();
 			ctrl->consensus_iterate();
 			Serial.println("ack");
 		} else {
@@ -284,17 +286,23 @@ void Interface::process(String command) {
 		}
 	} else if (command.startsWith("g c")) {
 		sscanf(command.c_str(), "g c %d", &occupancy);
-		i = occupancy == id ? 2 : get_neighbour_index(occupancy);
-		serial_convert_float('c', occupancy, ctrl->get_c(i));
+		if (occupancy == id) {
+			serial_convert_float('c', occupancy, ctrl->get_c(2));
+		} else {
+			comm->get_e_cost(occupancy);
+			comm->default_push();
+		}
 	} else if (command.startsWith("c")) {
 		sscanf(command.c_str(), "c %d %f", &occupancy, &lux);
-		i = occupancy == id ? 2 : get_neighbour_index(occupancy);
-		ctrl->set_c(i, lux);
-		comm->set_e_cost(occupancy, lux);
-		comm->default_push();
-		comm->consensus();
-		comm->default_push();
-		ctrl->consensus_iterate();
+		if (occupancy == id) {
+			ctrl->set_c(2, lux);
+			comm->consensus();
+			comm->default_push();
+			ctrl->consensus_iterate();
+		} else {
+			comm->set_e_cost(occupancy, lux);
+			comm->default_push();
+		}
 	} else if (command.startsWith("R")) {
 		this->restart_time = millis();
 		ctrl->calib();
