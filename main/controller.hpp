@@ -46,6 +46,7 @@ class Controller {
 	float get_occupied();
 	float get_unoccupied();
 	void set_rho(float value);
+	int is_occupied();
 
 	void set_occupied_bound(float value);
 	void set_unoccupied_bound(float value);

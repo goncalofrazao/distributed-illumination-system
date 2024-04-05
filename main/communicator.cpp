@@ -173,7 +173,7 @@ void Communicator::process() {
 			ctrl->consensus_iterate();
 			break;
 		case 8:
-			ack_occ(ctrl->get_occupancy());
+			ack_occ(ctrl->is_occupied());
 			break;
 		case 9:
 			memcpy(&aux_int, &can_msg_rx.data[1], 4);

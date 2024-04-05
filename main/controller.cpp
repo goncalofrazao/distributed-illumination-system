@@ -34,6 +34,7 @@ float Controller::get_L() { return L; }
 float Controller::get_occupied() { return occupied; }
 float Controller::get_unoccupied() { return unoccupied; }
 void Controller::set_rho(float value) { rho = value; }
+int Controller::is_occupied() { return L == occupied; }
 
 void Controller::set_occupied_bound(float value) { occupied = value; }
 void Controller::set_unoccupied_bound(float value) { unoccupied = value; }
