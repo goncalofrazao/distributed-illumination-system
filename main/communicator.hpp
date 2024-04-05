@@ -6,12 +6,21 @@
 #include "hardware/flash.h"
 #include "interface.hpp"
 #include "mcp2515.h"
+#include "queue"
 
 void serial_convert_float(char c, int id, float data);
 void serial_convert_int(char c, int id, int data);
 
 class Communicator {
+	uint8_t id;
+	MCP2515 *can0;
+	struct can_frame can_msg_rx;
+	struct can_frame can_msg_tx;
+	Interface *interface;
+	void *controller;
+
    public:
+	std::queue<struct can_frame> can_queue;
 	Communicator();
 
 	void set_id();
@@ -19,12 +28,14 @@ class Communicator {
 
 	void set_can0(MCP2515 *_can0);
 	void set_interface(Interface *_interface);
+	void set_controller(void *_controller);
 
 	void send(struct can_frame *msg);
 	bool recv();
 	void send_syn();
 	uint8_t get_recv_id();
 
+	void consensus_update();
 	void process();
 
 	void set_duty(int i, float duty);		 // 2
@@ -81,12 +92,10 @@ class Communicator {
 	void ack_l_bound(float l_bound);			  // 59
 	void ack_e_cost(float e_cost);				  // 60
 
-   private:
-	uint8_t id;
-	MCP2515 *can0;
-	struct can_frame can_msg_rx;
-	struct can_frame can_msg_tx;
-	Interface *interface;
+	void measure_o();		// 61
+	void measure_k(int k);	// 62
+	void calculate();		// 63
+	void consensus();		// 64
 };
 
 #endif

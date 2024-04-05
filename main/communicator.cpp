@@ -1,5 +1,7 @@
 #include "communicator.hpp"
 
+#include "controller.hpp"
+
 Communicator::Communicator() {}
 
 void Communicator::set_id() {
@@ -20,12 +22,13 @@ void Communicator::set_can0(MCP2515* _can0) {
 
 void Communicator::set_interface(Interface* _interface) { interface = _interface; }
 
+void Communicator::set_controller(void* _controller) { controller = _controller; }
+
 void Communicator::send(struct can_frame* msg) {
 	if (msg)
 		can0->sendMessage(msg);
 	else
 		can0->sendMessage(&can_msg_tx);
-	return;
 }
 
 bool Communicator::recv() {
@@ -95,9 +98,29 @@ void fullfill_msg(struct can_frame* msg, int id, int code, void* data) {
 	}
 }
 
+void Communicator::consensus_update() {
+	Controller* control = (Controller*)controller;
+	float d;
+	can_msg_tx.can_id = id;
+	can_msg_tx.can_dlc = 6;
+	can_msg_tx.data[0] = 100;
+
+	for (int i = 0; i < interface->neighbour_count; i++) {
+		can_msg_tx.data[1] = interface->neighbours[i];
+		memcpy(&can_msg_tx.data[2], &d, 4);
+		can_queue.push(can_msg_tx);
+	}
+
+	can_msg_tx.data[1] = id;
+	memcpy(&can_msg_tx.data[2], &d, 4);
+	can_queue.push(can_msg_tx);
+}
+
 void Communicator::process() {
 	int aux_int;
 	float aux_float;
+	Controller* control = (Controller*)controller;
+	int i, j;
 
 	// Serial.print(can_msg_rx.can_id);
 	// Serial.print(" - ");
@@ -116,6 +139,7 @@ void Communicator::process() {
 			interface->push_neighbour(can_msg_rx.can_id);
 			return;
 		case 2:
+			// interface->process("d " + String(can_msg_rx.can_id) + " " + String(*(float*)&can_msg_rx.data[2]));
 			interface->status->setControllerOff();
 			memcpy(&aux_float, &can_msg_rx.data[1], 4);
 			interface->driver->write_duty_cycle(aux_float);
@@ -294,8 +318,28 @@ void Communicator::process() {
 			memcpy(&aux_float, &can_msg_rx.data[1], 4);
 			serial_convert_float('c', can_msg_rx.can_id, aux_float);
 			return;
+		case 61:
+			control->measure_o();
+			return;
+		case 62:
+			memcpy(&aux_int, &can_msg_rx.data[1], 4);
+			i = aux_int == id ? 2 : interface->get_neighbour_index(aux_int);
+			control->measure_k(i);
+			return;
+		case 63:
+			control->calculate();
+			return;
+		case 64:
+			control->consensus_iterate();
+			return;
+		case 100:
+			i = interface->get_neighbour_index(can_msg_rx.can_id);
+			j = can_msg_rx.data[1] == id ? 2 : interface->get_neighbour_index(can_msg_rx.data[1]);
+			memcpy(&aux_float, &can_msg_rx.data[2], 4);
+			control->update_d_recv(i, j, aux_float);
+			return;
 	}
-	can0->sendMessage(&can_msg_tx);
+	can_queue.push(can_msg_tx);
 }
 
 void Communicator::set_duty(int i, float data) { fullfill_msg(&can_msg_tx, i, 2, &data); }		// 2
@@ -351,3 +395,8 @@ void Communicator::ack_o_bound(float data) { fullfill_msg(&can_msg_tx, id, 55, &
 void Communicator::ack_u_bound(float data) { fullfill_msg(&can_msg_tx, id, 57, &data); }		// 57
 void Communicator::ack_l_bound(float data) { fullfill_msg(&can_msg_tx, id, 59, &data); }		// 59
 void Communicator::ack_e_cost(float data) { fullfill_msg(&can_msg_tx, id, 60, &data); }			// 60
+
+void Communicator::measure_o() { fullfill_msg(&can_msg_tx, id, 61, NULL); }			  // 61
+void Communicator::measure_k(int data) { fullfill_msg(&can_msg_tx, id, 62, &data); }  // 62
+void Communicator::calculate() { fullfill_msg(&can_msg_tx, id, 63, NULL); }			  // 63
+void Communicator::consensus() { fullfill_msg(&can_msg_tx, id, 64, NULL); }			  // 64
